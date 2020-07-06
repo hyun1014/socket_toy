@@ -1,0 +1,26 @@
+{
+  "name": "socket_toy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyun1014/socket_toy.git"
+  },
+  "author": "hyun1014",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hyun1014/socket_toy/issues"
+  },
+  "homepage": "https://github.com/hyun1014/socket_toy#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "ejs": "^3.1.3",
+    "express": "^4.17.1",
+    "mongoose": "^5.9.21",
+    "socket.io": "^2.3.0"
+  }
+}
