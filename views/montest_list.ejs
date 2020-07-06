@@ -7,6 +7,7 @@
     <body>
         <script src="/socket.io/socket.io.js"></script>
         <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+        <h1><%= usr_self %></h1>
         <ul>
             <% for(var i=0; i<usr_list.length; i++) { %>
                 <li><a href="/chat_room/<%= usr_self %>/<%= usr_list[i].name %>">
