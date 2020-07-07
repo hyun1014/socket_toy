@@ -3,16 +3,15 @@ const socketio = require('socket.io');
 const http = require('http');
 const bodyparser = require('body-parser');
 const path = require('path');
-const chatRouter = require('./routers/chatRouter');
+const chatRouter = require('./routers/chatRouter'); 
 const userRouter = require('./routers/userInfoRouter');
-const mongSchema = require('./schemas');
+const mongSchema = require('./schemas'); //Schema들은 여기에 한번에 정의해둠
 const mongoose = require('mongoose');
 
 const app = express();
 const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 
-var User = mongoose.model('user', mongSchema.userSchema);
 var Chat_msg = mongoose.model('chat_msgs', mongSchema.chatSchema, 'Chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
 
 mongoose.connect('mongodb://localhost:27017/prac', {useNewUrlParser: true, useUnifiedTopology: true});
