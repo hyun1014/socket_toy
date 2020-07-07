@@ -11,7 +11,7 @@ router.get('/:user_id', (req, res) => { // 로그인 이후 채팅 가능한 유
         if(err){
             return res.status.send({error: 'db failed'});
         }
-        res.render('montest_list.ejs', {usr_list: data, usr_self: req.params.user_id});
+        res.render('user_list.ejs', {usr_list: data, usr_self: req.params.user_id});
     });
 });
 
