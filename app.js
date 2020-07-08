@@ -12,9 +12,10 @@ const app = express();
 const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 
+var User = mongoose.model('user', mongSchema.userSchema);
 var Chat_msg = mongoose.model('chat_msgs', mongSchema.chatSchema, 'Chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
 
-mongoose.connect('mongodb://localhost:27017/prac', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect('mongodb://localhost:27017/chat_toy', {useNewUrlParser: true, useUnifiedTopology: true});
 // 위에 저거 안적으면 deprecated 된거라고 warning 보여주면서 빼액댐 나중에 뭔지 찾아보자
 mongoose.Promise = global.Promise; //promise 관련해서 더 알아봐야 할듯
 
@@ -33,19 +34,28 @@ app.use('/chat_room', chatRouter); // 로그인 이후 채팅룸 메뉴 입장
 
 io.on('connection', (socket) => { // socket 연결
     console.log(socket.id + " connected");
-    socket.on('join_room', (room_name) => { // room에 join
+    socket.on('join_room', async (room_name, sender) => { // room에 join
         socket.join(room_name);
         console.log("Joined " + room_name);
-        socket.room = room_name; // Attrubute? 아 뭐였지 암튼 속성 추가
+        var joined_nick = null;
+        await User.findOne({user_id: sender}).then(function(doc){ joined_nick = doc.nickname; });
+        socket.nick = joined_nick;
+        socket.room = room_name;
+        io.to(room_name).emit('joined_room', socket.nick);
     });
-    socket.on('send_msg', (message, msender, mreceiver) => { // socket에서 msg를 보냄
+    socket.on('send_msg', (message, msender, mreceiver, room_name, msg_time) => { // socket에서 msg를 보냄
         console.log("Message is sent!");
         console.log(message + " / " + msender + " / " + mreceiver);
         var new_msg = new Chat_msg({ // Instance 생성
+            room: room_name,
             sender: msender,
             receiver: mreceiver,
-            content: message
+            content: message,
+            created_date: msg_time
         });
+        console.log("message is ----------" + msg_time);
+        console.log(typeof msg_time);
+        console.log(typeof new Date());
         new_msg.save((err) => { // Chat msgs Collection에 저장 
             if(err){
                 console.log(err);
@@ -54,10 +64,11 @@ io.on('connection', (socket) => { // socket 연결
             }
             console.log("DB save success");
             console.log("Message was " + message);
-            socket.broadcast.to(socket.room).emit('receive_msg', message); // 같은 room에 있는 모든 socket에게 이벤트 emit (여기서는 1대1 채팅이므로 상대에게만 emit)
+            socket.broadcast.to(socket.room).emit('receive_msg', message, msg_time); // 같은 room에 있는 모든 socket에게 이벤트 emit (여기서는 1대1 채팅이므로 상대에게만 emit)
         });
     });
-    socket.on('disconnect', (socket) => { // undefined로 뜬다. socket이 disconnect됨과 동시에 정보가 전부 삭제되는듯?
+    socket.on('disconnect', () => { // undefined로 뜬다. socket이 disconnect됨과 동시에 정보가 전부 삭제되는듯?
+        socket.broadcast.to(socket.room).emit('left_room', socket.nick)
         console.log(socket.id + " disconnected");
     });
 });

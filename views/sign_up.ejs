@@ -6,9 +6,12 @@
     </head>
     <body>
         <form action='/userInfo/register' method='POST'>
-            &nbsp;User ID: <input type='text' id='un' name='user_id' placeholder='Input id'><br>
-            Password: <input type='password' id='pw' name='user_pw'><br>
+            &nbsp;아이디: <input type='text' id='un' name='user_id' placeholder='Input id'><br>
+            비밀번호: <input type='password' id='pw' name='user_pw'><br>
+            비밀번호 확인: <input type='password' id='pw_check' name='user_pw_check'><br>
+            닉네임: <input type='text' id='un' name='user_nick' placeholder='Input id'><br>
             <input type='submit' value='Sign up'>
         </form>
+        <h2><%= err_msg %> </h2>
     </body>
 </html>

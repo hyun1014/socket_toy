@@ -15,18 +15,29 @@ else{
     사전순으로 앞에 오는 user_id가 앞쪽으로, 뒤에 오는게 뒤쪽으로 해서 concat함
 */
 console.log(room_name);
-socket.emit('join_room', room_name);
+socket.emit('join_room', room_name, sender);
 $('form').submit(() => { // message 전송
     var message = $('#send_msg').val();
+    var msg_time = new Date();
     $('#chat_log').append($('<li style="text-align:right;">')
-        .text(message)); // 자기가 보낸건 오른쪽에 오도록
+        .text(message + `(${msg_time.getHours()}:${msg_time.getMinutes()})`)); // 자기가 보낸건 오른쪽에 오도록
     $('#send_msg').val('');
     console.log("Sent message");
-    socket.emit('send_msg', message, sender, receiver);
+    socket.emit('send_msg', message, sender, receiver, room_name, msg_time);
     return false;
 });
-socket.on('receive_msg', (rcvmsg) => {
+socket.on('receive_msg', (rcvmsg, msg_time) => {
     console.log(rcvmsg);
+    console.log(msg_time);
+    var msg_dateTime = new Date(msg_time);
     $('#chat_log').append($('<li style="text-align:left;">')
-        .text(rcvmsg)); // 상대한테 받은건 왼쪽에 오도록
+        .text(rcvmsg + `(${msg_dateTime.getHours()}:${msg_dateTime.getMinutes()})`)); // 상대한테 받은건 왼쪽에 오도록
+});
+socket.on('joined_room', (nick) => {
+    $('#chat_log').append($('<li style="text-align:center;">')
+        .text(`----${nick}님이 접속하였습니다.----`)); 
+});
+socket.on('left_room', (nick) => {
+    $('#chat_log').append($('<li style="text-align:center;">')
+        .text(`----${nick}님이 접속을 끊었습니다.----`)); 
 });

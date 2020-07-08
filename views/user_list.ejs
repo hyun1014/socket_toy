@@ -7,11 +7,12 @@
     <body>
         <script src="/socket.io/socket.io.js"></script>
         <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-        <h1><%= usr_self %></h1>
+        <h1><%= usr_selfnick %>님 반갑습니다</h1>
+        <h2>유저 목록</h2>
         <ul>
             <% for(var i=0; i<usr_list.length; i++) { %>
-                <li><a href="/chat_room/<%= usr_self %>/<%= usr_list[i].name %>">
-                    <%= usr_list[i].name %></a></li>
+                <li><a href="/chat_room/<%= usr_selfid %>/<%= usr_list[i].user_id %>">
+                    <%= usr_list[i].nickname %></a></li>
             <% } %>  
         </ul>
         <a href="/">Log out</a>
