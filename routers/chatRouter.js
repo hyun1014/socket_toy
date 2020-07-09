@@ -9,7 +9,7 @@ var Chat_msg = mongoose.model('chat_msgs', mongSchema.chatSchema, 'Chat_msgs'); 
 
 router.get('/:user_id', async (req, res) => { // 로그인 이후 채팅 가능한 유저 목록 (현재는 그냥 db에 있는 다른 유저들 전부 추가)
     var self_nick = null;
-    User.findOne({user_id: req.params.user_id})
+    await User.findOne({user_id: req.params.user_id})
         .then(function(doc){self_nick = doc.nickname;}); //자기 nickname 찾기
     User.find({user_id: {$ne: req.params.user_id}}, function(err, data){ // 로그인 유저 자신은 목록에서 제외
         if(err){

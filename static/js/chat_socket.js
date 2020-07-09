@@ -45,6 +45,7 @@ socket.on('joined_room', (nick) => { // join 이벤트 listen
         .text(`----${nick}님이 접속하였습니다.----`)); 
 });
 socket.on('left_room', (nick) => { // left 이벤트 listen
+    console.log(nick + ' disconnected');
     $('#chat_log').append($('<li style="text-align:center;">')
         .text(`----${nick}님이 접속을 끊었습니다.----`)); 
 });
