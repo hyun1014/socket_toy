@@ -48,10 +48,18 @@ router.post('/register', function(req, res){ // New user 등록
     new_user.pw_check = user_pw_check; // virtual attribute
     new_user.save((err) => { // users collection에 저장
         if(err){
-            if(err.code==11000){ // ID 중복
-                console.log(err);
-                res.render('sign_up.ejs', {err_msg: '이미 존재하는 아이디입니다'}); // ejs 템플릿에 들어갈 자리가 있으면 값이 없다고 해도 undefined 이렇게라도 넣어야함.
-                res.end();
+            if(err.code==11000){ // 중복값 발생
+                var dupkey = Object.keys(err.keyPattern);
+                if(dupkey=='user_id'){
+                    console.log(err);
+                    res.render('sign_up.ejs', {err_msg: '이미 존재하는 아이디입니다'}); // ejs 템플릿에 들어갈 자리가 있으면 값이 없다고 해도 undefined 이렇게라도 넣어야함.
+                    res.end();
+                }
+                else if(dupkey=='nickname'){
+                    console.log(err);
+                    res.render('sign_up.ejs', {err_msg: '이미 존재하는 닉네임입니다'});
+                    res.end();
+                }
             }
             else if(err.message.indexOf('required')!=-1){ // 뭔가 항목을 빼먹었을때
                 if(err.message.indexOf('user_id')!==1){

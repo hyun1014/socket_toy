@@ -5,7 +5,7 @@ var mongSchema = {
     userSchema: new Schema({ // User collection schema
         user_id: {type: String, required: true, unique: true},
         password: {type: String, required: true},
-        nickname: {type: String, required: true},
+        nickname: {type: String, required: true, unique: true},
         joined_date: {type: Date, default: Date.now}
     },{versionKey: false}),
     chatSchema: new Schema({ // Chatting message collection schema
