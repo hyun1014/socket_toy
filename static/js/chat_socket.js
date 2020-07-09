@@ -23,21 +23,28 @@ $('form').submit(() => { // message 전송
         .text(message + `(${msg_time.getHours()}:${msg_time.getMinutes()})`)); // 자기가 보낸건 오른쪽에 오도록
     $('#send_msg').val('');
     console.log("Sent message");
-    socket.emit('send_msg', message, sender, receiver, room_name, msg_time);
+    var m_info = { // 메시지 객체 정보(db에 등록할 정보들이 전부 있음)
+        room_name: room_name,
+        sender: sender,
+        receiver: receiver,
+        message: message,
+        msg_time: msg_time
+    };
+    socket.emit('send_msg', m_info); // send_msg 이벤트 보내기 (message 보내기)
     return false;
 });
-socket.on('receive_msg', (rcvmsg, msg_time) => {
+socket.on('receive_msg', (rcvmsg, msg_time) => { // receive_msg 이벤트 listen (message 받음)
     console.log(rcvmsg);
     console.log(msg_time);
     var msg_dateTime = new Date(msg_time);
     $('#chat_log').append($('<li style="text-align:left;">')
         .text(rcvmsg + `(${msg_dateTime.getHours()}:${msg_dateTime.getMinutes()})`)); // 상대한테 받은건 왼쪽에 오도록
 });
-socket.on('joined_room', (nick) => {
+socket.on('joined_room', (nick) => { // join 이벤트 listen
     $('#chat_log').append($('<li style="text-align:center;">')
         .text(`----${nick}님이 접속하였습니다.----`)); 
 });
-socket.on('left_room', (nick) => {
+socket.on('left_room', (nick) => { // left 이벤트 listen
     $('#chat_log').append($('<li style="text-align:center;">')
         .text(`----${nick}님이 접속을 끊었습니다.----`)); 
 });

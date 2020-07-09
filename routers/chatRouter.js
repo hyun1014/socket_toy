@@ -24,9 +24,9 @@ router.get('/:user_id/:target', async (req, res) => { // 채팅방 입장
     var msg_sender = null
     var msg_receiver = null;
     await User.findOne({user_id: req.params.user_id})
-        .then(function(doc){msg_sender = doc;}); // sender nickname 찾기
+        .then(function(doc){msg_sender = doc;}); // sender 찾기
     await User.findOne({user_id: req.params.target})
-        .then(function(doc){msg_receiver = doc;}); // receiver nickname 찾기
+        .then(function(doc){msg_receiver = doc;}); // receiver 찾기
     /*
     room_name은 유저 2명의 id를 붙여서 만든다.
     사전순으로 앞에 오는 user_id가 앞쪽으로, 뒤에 오는게 뒤쪽으로 해서 concat함
@@ -38,7 +38,7 @@ router.get('/:user_id/:target', async (req, res) => { // 채팅방 입장
     console.log("Room name is " + room_name);
     console.log("Sender\n-------------------\n" + msg_sender);
     console.log("Receiver\n-------------------\n" + msg_receiver);
-    Chat_msg.find({room: room_name}, // 자신이 보냈거나 받은 메시지 로그 전부 조회
+    Chat_msg.find({room: room_name}, // room_name에서 발생한 Chat_msg 전부 조회
         function(err, msg_log){
             if(err){
                 return res.status.send({error: 'db failed'});

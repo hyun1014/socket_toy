@@ -28,7 +28,7 @@ router.post('/sign_in', function(req, res){ //로그인
             res.end();
         }
         else
-            res.redirect(`/chat_room/${tar[0].user_id}`);
+            res.redirect(`/chat_room/${tar[0].user_id}`); //접속 성공
     });
 });
 
@@ -45,32 +45,43 @@ router.post('/register', function(req, res){ // New user 등록
         nickname: user_nick
     });
 
-    new_user.pw_check = user_pw_check;
-    console.log('BP0');
+    new_user.pw_check = user_pw_check; // virtual attribute
     new_user.save((err) => { // users collection에 저장
         if(err){
             if(err.code==11000){ // ID 중복
                 console.log(err);
-                res.render('sign_up.ejs', {err_msg: '이미 존재하는 아이디입니다'});
+                res.render('sign_up.ejs', {err_msg: '이미 존재하는 아이디입니다'}); // ejs 템플릿에 들어갈 자리가 있으면 값이 없다고 해도 undefined 이렇게라도 넣어야함.
                 res.end();
             }
-            else if(err.message.indexOf('required')!=-1 && err.message.indexOf('pw')!=-1){ 
-                console.log(err);
-                res.render('sign_up.ejs', {err_msg: '비밀번호 확인 입력이 필요합니다.'}); // ejs 템플릿에 들어갈 자리가 있으면 값이 없다고 해도 undefined 이렇게라도 넣어야함.
-                res.end();
+            else if(err.message.indexOf('required')!=-1){ // 뭔가 항목을 빼먹었을때
+                if(err.message.indexOf('user_id')!==1){
+                    console.log(err);
+                    res.render('sign_up.ejs', {err_msg: '아이디 입력이 필요합니다.'});
+                    res.end();
+                }
+                else if(err.message.indexOf('password')!==1){
+                    console.log(err);
+                    res.render('sign_up.ejs', {err_msg: '비밀번호 입력이 필요합니다.'});
+                    res.end();
+                }
+                else if(err.message.indexOf('pw')!==1){
+                    console.log(err);
+                    res.render('sign_up.ejs', {err_msg: '비밀번호 확인 입력이 필요합니다.'});
+                    res.end();
+                }
+                else if(err.message.indexOf('nickname')!==1){
+                    console.log(err);
+                    res.render('sign_up.ejs', {err_msg: '닉네임 입력이 필요합니다.'});
+                    res.end();
+                }
             }
-            else if (err.message.indexOf('different')!=-1){
+            else if (err.message.indexOf('different')!=-1){ // pw 확인이 입력한 pw와 다름
                 console.log(err);
                 res.render('sign_up.ejs', {err_msg: '비밀번호 확인이 다릅니다.'});
                 res.end();
             }
-            else if(err.message.indexOf('required')!=-1 && err.message.indexOf('nickname')!=-1){
-                console.log(err);
-                res.render('sign_up.ejs', {err_msg: '닉네임 입력이 필요합니다.'});
-                res.end();
-            }
             else{
-                console.log(err);
+                console.log(err.message);
                 res.json(err);
                 res.end();
             }
