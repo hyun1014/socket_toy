@@ -12,6 +12,7 @@ var mongSchema = {
         room: {type: String},
         sender: {type: String},
         receiver: {type: String},
+        msg_type: {type: String},
         content: {type: String},
         created_date: {type: Date, default: Date.now}
     },{versionKey: false})

@@ -16,35 +16,86 @@ else{
 */
 console.log(room_name);
 socket.emit('join_room', room_name, sender);
-$('form').submit(() => { // message 전송
+$('form').submit(() => { // ---------------message 전송
     var message = $('#send_msg').val();
-    var msg_time = new Date();
+    var msg_date = new Date();
+    // $('#chat_log').append($('<li style="text-align:right;">')
+    //     .text(message + `(${msg_time.getHours()}:${msg_time.getMinutes()})`)); // 자기가 보낸건 오른쪽에 오도록
     $('#chat_log').append($('<li style="text-align:right;">')
-        .text(message + `(${msg_time.getHours()}:${msg_time.getMinutes()})`)); // 자기가 보낸건 오른쪽에 오도록
+        .text(message).append($('<small>').text(`(${msg_date.getHours()}:${msg_date.getMinutes()})`)));
     $('#send_msg').val('');
     console.log("Sent message");
     var m_info = { // 메시지 객체 정보(db에 등록할 정보들이 전부 있음)
         room_name: room_name,
         sender: sender,
         receiver: receiver,
+        msg_type: 'text',
         message: message,
-        msg_time: msg_time
+        msg_time: msg_date
     };
+    console.log('text: ' + m_info.message + ' / ' + m_info.msg_time);
     socket.emit('send_msg', m_info); // send_msg 이벤트 보내기 (message 보내기)
+    //m_info 전달할 때 Date object가 string으로 변환되어서 emit됨
     return false;
 });
-socket.on('receive_msg', (rcvmsg, msg_time) => { // receive_msg 이벤트 listen (message 받음)
-    console.log(rcvmsg);
-    console.log(msg_time);
-    var msg_dateTime = new Date(msg_time);
-    $('#chat_log').append($('<li style="text-align:left;">')
-        .text(rcvmsg + `(${msg_dateTime.getHours()}:${msg_dateTime.getMinutes()})`)); // 상대한테 받은건 왼쪽에 오도록
+var inputFile = document.getElementById('sendfile'); // ---------------media 파일 전송
+inputFile.addEventListener('change', function(event) {
+    console.log('sendFile activated');
+    var stream = ss.createStream(); // duplex stream 생성
+    console.log(inputFile.files);
+    var tar_file = inputFile.files[0];
+    var msg_time = new Date();
+    var msg_info = { // 메시지 객체 정보(db에 등록할 정보들이 전부 있음)
+        room_name: room_name,
+        sender: sender,
+        receiver: receiver,
+        msg_type: 'media',
+        message: tar_file.name,
+        msg_time: msg_time.toUTCString()
+    };
+    console.log('media: ' + msg_info.msg_time + ' / ' + typeof msg_info.msg_time);
+    ss(socket).emit('sendFile', stream, tar_file.name, tar_file.size, msg_info);
+    console.log("sendFile emitted");
+    ss.createBlobReadStream(tar_file).pipe(stream); // 파일을 읽는 BlobReadstream을 위에서 만든 stream에다가 연결함 (전송)
 });
-socket.on('joined_room', (nick) => { // join 이벤트 listen
+socket.on('receive_msg', (new_msg) => { // ---------------receive_msg 이벤트 listen (message 받음)
+    //new_msg의 created_date는 string으로 변환되어서 들어옴
+    console.log("Received!");
+    console.log(new_msg);
+    console.log(new_msg.content);
+    console.log(new_msg.created_date + ' / ' + typeof new_msg.created_date);
+    var msg_date = new Date(new_msg.created_date);
+    if(new_msg.msg_type=='text'){ //text msg
+        $('#chat_log').append($('<li style="text-align:left;">') //상대한테 받은건 왼쪽으로
+        .text(new_msg.content).append($('<small>').text(`(${msg_date.getHours()}:${msg_date.getMinutes()})`)));
+    }
+    else{ // file msg
+        var chat_log = document.getElementById('chat_log');
+        var temp_li = document.createElement('li');
+        var downLink = document.createElement("a");
+        var img_show = document.createElement('img');
+        var rcv_time = document.createElement('small');
+        rcv_time.appendChild(document.createTextNode(`(${msg_date.getHours()}:${msg_date.getMinutes()})`));
+        downLink.setAttribute('href', '/down_images/'+new_msg.content);
+        downLink.setAttribute('download', new_msg.content);
+        img_show.setAttribute('src', '/down_images/'+new_msg.content);
+        img_show.setAttribute('width', '100px');
+        img_show.setAttribute('height', '100px');
+        if(new_msg.sender==sender)
+            temp_li.setAttribute('style', 'text-align:right;');
+        else
+            temp_li.setAttribute('style', 'text-align:left;');
+        downLink.appendChild(img_show);
+        temp_li.appendChild(downLink);
+        temp_li.appendChild(rcv_time);
+        chat_log.appendChild(temp_li);
+    }
+});
+socket.on('joined_room', (nick) => { // ---------------join 이벤트 listen
     $('#chat_log').append($('<li style="text-align:center;">')
         .text(`----${nick}님이 접속하였습니다.----`)); 
 });
-socket.on('left_room', (nick) => { // left 이벤트 listen
+socket.on('left_room', (nick) => { // ---------------left 이벤트 listen
     console.log(nick + ' disconnected');
     $('#chat_log').append($('<li style="text-align:center;">')
         .text(`----${nick}님이 접속을 끊었습니다.----`)); 

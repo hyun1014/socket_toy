@@ -12,7 +12,8 @@
         <form id='chat' action='/' method='POST'>
             메시지 전송: <input type='text' id='send_msg'>
             <input type='submit' value='Send'>
-            <a href="/chat_room/<%= sender.user_id %>">Go back</a>
+            <a href="/chat_room/<%= sender.user_id %>">Go back</a><br>
+            <input id='sendfile' type='file'>
         </form>
         <div style="overflow:scroll; width:500px; height:700px; border: 1px solid black;
         padding: 20px 20px 20px 20px;">
@@ -20,16 +21,34 @@
                 <li style="text-align:center;">----Chatting with <%= receiver.nickname %>----</li>
                 <% for(var i=0 ; i<msg_log.length; i++) { %>
                     <% if(msg_log[i].sender==sender.user_id) { %>
-                        <li style="text-align:right;"><%= msg_log[i].content %> <small>(<%= moment(msg_log[i].created_date).format('HH:mm') %>)</small></li>
+                        <li style="text-align:right;">
+                            <% if(msg_log[i].msg_type=='media') { %>
+                                <a href="/down_images/<%= msg_log[i].content %>" download="<%= msg_log[i].content %>">
+                                    <img src="/down_images/<%= msg_log[i].content %>" width='100px' height='100px'>
+                                </a>
+                            <% } else { %> 
+                                <%= msg_log[i].content %>
+                            <% } %>  
+                            <small>(<%= moment(msg_log[i].created_date).format('HH:mm') %>)</small>
+                        </li>
                     <% } else { %>
-                        <li style="text-align:left;"><%= msg_log[i].content %> <small>(<%= moment(msg_log[i].created_date).format('HH:mm') %>)</small></li>
+                        <li style="text-align:left;">
+                            <% if(msg_log[i].msg_type=='media') { %>
+                                <a href="/down_images/<%= msg_log[i].content %>" download="<%= msg_log[i].content %>">
+                                    <img src="/down_images/<%= msg_log[i].content %>" width='100px' height='100px'>
+                                </a>
+                            <% } else { %> 
+                                <%= msg_log[i].content %>
+                            <% } %>  
+                            <small>(<%= moment(msg_log[i].created_date).format('HH:mm') %>)</small>
+                        </li>
                     <% } %> 
                 <% } %> 
             </ul>
         </div>
         <script src="/socket.io/socket.io.js"></script>
+        <script src="/js/socket.io-stream.js"></script>
         <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
         <script src='/js/chat_socket.js'></script>
-        <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.3.4/vue.min.js'></script>
     </body>
 </html>
