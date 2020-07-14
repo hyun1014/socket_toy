@@ -11,9 +11,9 @@
         <p id='receiver_nick'>상대방: <%= receiver.nickname %></p>
         <form id='chat' action='/' method='POST'>
             메시지 전송: <input type='text' id='send_msg'>
-            <input type='submit' value='Send'>
+            <input type='submit' value='Send'><br>
+            파일 전송: <input id='sendfile' type='file' accept="image/png, image/jpg, image/jpeg, image/gif"><br>
             <a href="/chat_room/<%= sender.user_id %>">Go back</a><br>
-            <input id='sendfile' type='file'>
         </form>
         <div style="overflow:scroll; width:500px; height:700px; border: 1px solid black;
         padding: 20px 20px 20px 20px;">
@@ -23,7 +23,7 @@
                     <% if(msg_log[i].sender==sender.user_id) { %>
                         <li style="text-align:right;">
                             <% if(msg_log[i].msg_type=='media') { %>
-                                <a href="/down_images/<%= msg_log[i].content %>" download="<%= msg_log[i].content %>">
+                                <a href="/down_images/<%= msg_log[i].content %>" target="_blank">
                                     <img src="/down_images/<%= msg_log[i].content %>" width='100px' height='100px'>
                                 </a>
                             <% } else { %> 
@@ -34,7 +34,7 @@
                     <% } else { %>
                         <li style="text-align:left;">
                             <% if(msg_log[i].msg_type=='media') { %>
-                                <a href="/down_images/<%= msg_log[i].content %>" download="<%= msg_log[i].content %>">
+                                <a href="/down_images/<%= msg_log[i].content %>" target="_blank">
                                     <img src="/down_images/<%= msg_log[i].content %>" width='100px' height='100px'>
                                 </a>
                             <% } else { %> 

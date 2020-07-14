@@ -77,7 +77,7 @@ socket.on('receive_msg', (new_msg) => { // ---------------receive_msg 이벤트 
         var rcv_time = document.createElement('small');
         rcv_time.appendChild(document.createTextNode(`(${msg_date.getHours()}:${msg_date.getMinutes()})`));
         downLink.setAttribute('href', '/down_images/'+new_msg.content);
-        downLink.setAttribute('download', new_msg.content);
+        downLink.setAttribute('target', 'blank');
         img_show.setAttribute('src', '/down_images/'+new_msg.content);
         img_show.setAttribute('width', '100px');
         img_show.setAttribute('height', '100px');
