@@ -9,8 +9,8 @@
         <p id="sender_uid" hidden><%= sender.uid %></p>
         <p id="receiver_id" hidden><%= receiver._id %></p>
         <p id="receiver_uid" hidden><%= receiver.uid %></p>
-        <p id='sender_nick'>User: <%= sender.nickname %> </p>
-        <p id='receiver_nick'>상대방: <%= receiver.nickname %></p>
+        <p>User: <strong id='sender_nick'><%= sender.nickname %></strong> </p>
+        <p>상대방: <strong id='receiver_nick'><%= receiver.nickname %></strong></p>
         <form id='chat' action='/' method='POST'>
             메시지 전송: <input type='text' id='send_msg'>
             <input type='submit' value='Send'><br>

@@ -25,8 +25,8 @@ const io = socketio(httpServer);
 const ss = require('socket.io-stream');
 
 const s3 = new AWS.S3({ // S3 객체 생성
-    // accessKeyId: process.env.AWS_ACCESS_KEY,
-    // secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: 'ap-northeast-2'
 });
 
@@ -48,6 +48,8 @@ app.use(bodyparser.urlencoded({extended: true})); // express 내장이긴 한데
 app.use(express.static(path.join(__dirname, 'static'))); // static files 사용 경로
 
 app.get('/', async function(req, res){ // 처음 index 페이지 (로그인 || 회원가입)
+    console.log(process.env.AWS_ACCESS_KEY);
+    console.log(process.env.AWS_SECRET_ACCESS_KEY);
     res.render('index.ejs', {err_msg: undefined});
     res.end();
 });
@@ -100,8 +102,8 @@ io.on('connection', (socket) => { // socket 연결
             + file_ext;
 
         var s3_param = { // s3 접근에 필요한 parameter 값들을 담고 있음
-            Bucket: 'fanrep-test',
-            Key: 'static_files/chat_image/' + s3Filename,
+            Bucket: process.env.S3_BUCKET,
+            Key: process.env.S3_DIR + '/' + s3Filename,
             ACL: 'public-read',
             Body: stream
         };
@@ -118,7 +120,7 @@ io.on('connection', (socket) => { // socket 연결
                     sender: m_info.sender,
                     receiver: m_info.receiver,
                     msg_type: m_info.msg_type,
-                    content: 'https://d1s02z0ai6qb0b.cloudfront.net/' + s3_param.Key, // cloudfront 링크로, 파일 보여주기 및 다운 링크로 사용
+                    content: process.env.S3_BUCKETLINK + '/' + s3_param.Key, // cloudfront 링크로, 파일 보여주기 및 다운 링크로 사용
                     created_date: msg_sentTime
                 });
                 new_msg.save((dbErr) => { // Chat msgs Collection에 저장 
