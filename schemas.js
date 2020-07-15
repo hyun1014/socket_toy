@@ -10,12 +10,18 @@ var mongSchema = {
     },{versionKey: false}),
     chatSchema: new Schema({ // Chatting message collection schema
         room: {type: String},
-        sender: {type: String},
-        receiver: {type: String},
+        sender: {type: mongoose.Schema.Types.ObjectId},
+        receiver: {type: mongoose.Schema.Types.ObjectId},
         msg_type: {type: String},
         content: {type: String},
         created_date: {type: Date, default: Date.now}
-    },{versionKey: false})
+    },{versionKey: false}),
+    realUserSchema: new Schema({ // user collection에서 필요한것들로만 구성된 schema (어차피 이걸로 user 새로 만들일 없음)
+        uid: {type: String},
+        nickname: {type: String},
+        status_message: {type: String},
+        img: {type: String}
+    }, {versionKey: false})
 };
 // virtual attirubute -> 실제 document에 저장되는건 아님
 mongSchema.userSchema.virtual('pw_check').get(function(){return this._pw_check})

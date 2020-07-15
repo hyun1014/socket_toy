@@ -1,21 +1,25 @@
 var socket = io();
-var sender = document.getElementById('msender').innerHTML;
-var receiver = document.getElementById('mreceiver').innerHTML;
+var sender_id = document.getElementById('sender_id').innerHTML;
+var sender_uid = document.getElementById('sender_uid').innerHTML;
+var sender_nick = document.getElementById('sender_nick').innerHTML;
+var receiver_id = document.getElementById('receiver_id').innerHTML;
+var receiver_uid = document.getElementById('receiver_uid').innerHTML;
+var receiver_nick = document.getElementById('receiver_nick').innerHTML;
 var room_name = "default room";
-console.log("sender: " + sender);
-console.log("receiver: " + receiver);
-if (sender<receiver){
-    room_name = sender + receiver;
+console.log("sender: " + sender_uid);
+console.log("receiver: " + receiver_uid);
+if (sender_uid<receiver_uid){
+    room_name = sender_uid + receiver_uid;
 }
 else{
-    room_name = receiver + sender;
+    room_name = receiver_uid + sender_uid;
 }
 /*
     room_name은 유저 2명의 id를 붙여서 만든다.
     사전순으로 앞에 오는 user_id가 앞쪽으로, 뒤에 오는게 뒤쪽으로 해서 concat함
 */
 console.log(room_name);
-socket.emit('join_room', room_name, sender);
+socket.emit('join_room', room_name, sender_nick);
 $('form').submit(() => { // ---------------message 전송
     var message = $('#send_msg').val();
     var msg_date = new Date();
@@ -27,8 +31,8 @@ $('form').submit(() => { // ---------------message 전송
     console.log("Sent message");
     var m_info = { // 메시지 객체 정보(db에 등록할 정보들이 전부 있음)
         room_name: room_name,
-        sender: sender,
-        receiver: receiver,
+        sender: sender_id,
+        receiver: receiver_id, // 보류
         msg_type: 'text',
         message: message,
         msg_time: msg_date
@@ -47,8 +51,8 @@ inputFile.addEventListener('change', function(event) {
     var msg_time = new Date();
     var msg_info = { // 메시지 객체 정보(db에 등록할 정보들이 전부 있음)
         room_name: room_name,
-        sender: sender,
-        receiver: receiver,
+        sender: sender_id,
+        receiver: receiver_id,
         msg_type: 'media',
         message: tar_file.name,
         msg_time: msg_time.toUTCString()
@@ -81,7 +85,7 @@ socket.on('receive_msg', (new_msg) => { // ---------------receive_msg 이벤트 
         img_show.setAttribute('src', new_msg.content);
         img_show.setAttribute('width', '100px');
         img_show.setAttribute('height', '100px');
-        if(new_msg.sender==sender)
+        if(new_msg.sender==sender_id)
             temp_li.setAttribute('style', 'text-align:right;');
         else
             temp_li.setAttribute('style', 'text-align:left;');

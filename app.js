@@ -8,6 +8,8 @@ const express = require('express');
 const socketio = require('socket.io');
 const mongoose = require('mongoose');
 const AWS = require('aws-sdk');
+const md5 = require('md5');
+const moment = require('moment');
 require('dotenv').config({path: __dirname + '/.env'}); //환경변수 불러오기
 // Routers 불러오기
 const chatRouter = require('./routers/chatRouter'); 
@@ -23,13 +25,19 @@ const io = socketio(httpServer);
 const ss = require('socket.io-stream');
 
 const s3 = new AWS.S3({ // S3 객체 생성
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    // accessKeyId: process.env.AWS_ACCESS_KEY,
+    // secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: 'ap-northeast-2'
 });
 
 var User = mongoose.model('chat_user', mongSchema.userSchema, 'chat_users'); // collections 이름은 users로 됨
 var Chat_msg = mongoose.model('chat_msg', mongSchema.chatSchema, 'chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
+
+// -------------- test code -------------
+
+var realUser = mongoose.model('real_user', mongSchema.realUserSchema, 'user');
+
+// -------------- test code f-------------
 
 mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 // 위에 저거 안적으면 deprecated 된거라고 warning 보여주면서 빼액댐 나중에 뭔지 찾아보자
@@ -39,7 +47,7 @@ app.set('view engine', 'ejs'); // ejs 사용
 app.use(bodyparser.urlencoded({extended: true})); // express 내장이긴 한데 미들웨어 등록은 따로 해줘야 함
 app.use(express.static(path.join(__dirname, 'static'))); // static files 사용 경로
 
-app.get('/', function(req, res){ // 처음 index 페이지 (로그인 || 회원가입)
+app.get('/', async function(req, res){ // 처음 index 페이지 (로그인 || 회원가입)
     res.render('index.ejs', {err_msg: undefined});
     res.end();
 });
@@ -50,12 +58,11 @@ app.use('/chat_room', chatRouter); // 로그인 이후 채팅룸 메뉴 입장
 
 io.on('connection', (socket) => { // socket 연결
     console.log(socket.id + " connected");
-    socket.on('join_room', async (room_name, sender) => { // room에 join
+    socket.on('join_room', async (room_name, sender_nick) => { // room에 join
         socket.join(room_name);
+        console.log("Sender nick ---------------------------- " + sender_nick);
         console.log("Joined " + room_name);
-        var joined_nick = null;
-        await User.findOne({user_id: sender}).then(function(doc){ joined_nick = doc.nickname; }); //User collection에서 맞는 user document를 찾아냄
-        socket.nick = joined_nick;
+        socket.nick = sender_nick;
         socket.room = room_name;
         io.to(room_name).emit('joined_room', socket.nick);
     });
@@ -86,11 +93,15 @@ io.on('connection', (socket) => { // socket 연결
     });
     ss(socket).on('sendFile', (stream, dataName, dataSize, m_info) => {
         console.log(dataName + "/ " + dataSize + 'Byte');
+        var file_name = dataName.substr(0, dataName.indexOf('.')); // 파일명
+        var file_ext = dataName.substr(dataName.indexOf('.')); // 파일 확장자
         var msg_sentTime = new Date(m_info.msg_time);
-        var s3Filename = m_info.sender + '__' + Date.parse(m_info.msg_time) + '__' + dataName; //'sender의 user_id'__'시간'__'원본파일 이름 및 확장자' 이런 방식으로 s3 키 생성. 중복 방지를 위해서 이런 방식으로 함
+        var s3Filename = moment(msg_sentTime).format('YYYYMMDDHHmmss') + msg_sentTime.getMilliseconds() + '_' + md5(file_name)
+            + file_ext;
+
         var s3_param = { // s3 접근에 필요한 parameter 값들을 담고 있음
-            Bucket: 'firsttest-s3.com',
-            Key: 'images/' + s3Filename,
+            Bucket: 'fanrep-test',
+            Key: 'static_files/chat_image/' + s3Filename,
             ACL: 'public-read',
             Body: stream
         };
