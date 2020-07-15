@@ -7,6 +7,8 @@ const fs = require('fs');
 const express = require('express');
 const socketio = require('socket.io');
 const mongoose = require('mongoose');
+const AWS = require('aws-sdk');
+require('dotenv').config({path: __dirname + '/.env'}); //환경변수 불러오기
 // Routers 불러오기
 const chatRouter = require('./routers/chatRouter'); 
 const userRouter = require('./routers/userInfoRouter');
@@ -20,10 +22,16 @@ const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 const ss = require('socket.io-stream');
 
-var User = mongoose.model('user', mongSchema.userSchema);
-var Chat_msg = mongoose.model('chat_msgs', mongSchema.chatSchema, 'Chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
+const s3 = new AWS.S3({ // S3 객체 생성
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: 'ap-northeast-2'
+});
 
-mongoose.connect('mongodb://localhost:27017/chat_toy', {useNewUrlParser: true, useUnifiedTopology: true});
+var User = mongoose.model('chat_user', mongSchema.userSchema, 'chat_users'); // collections 이름은 users로 됨
+var Chat_msg = mongoose.model('chat_msg', mongSchema.chatSchema, 'chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
+
+mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 // 위에 저거 안적으면 deprecated 된거라고 warning 보여주면서 빼액댐 나중에 뭔지 찾아보자
 mongoose.Promise = global.Promise; //promise 관련해서 더 알아봐야 할듯
 
@@ -76,32 +84,44 @@ io.on('connection', (socket) => { // socket 연결
             socket.broadcast.to(socket.room).emit('receive_msg', new_msg); // 같은 room에 있는 모든 socket에게 이벤트 emit (여기서는 1대1 채팅이므로 상대에게만 emit)
         });
     });
-    ss(socket).on('sendFile', (stream, dataName, dataSize, m_info) => { // duplex stream 통해 file 전송
-        // 얘는 m_info 안의 Date 객체가 제대로 전달이 안되어서 걍 toUTCString으로 바꿔서 보냄
+    ss(socket).on('sendFile', (stream, dataName, dataSize, m_info) => {
         console.log(dataName + "/ " + dataSize + 'Byte');
-        var writeStream = fs.createWriteStream('./static/down_images/' + dataName); //Writestream 생성 (파일 저장 경로 및 이름 지정)
-        writeStream.on('finish', function() { // 파일 전부 다 받아왔으면 함수 실행
-            console.log('writestream on');
-            var new_msg = new Chat_msg({ // Instance 생성
-                room: m_info.room_name,
-                sender: m_info.sender,
-                receiver: m_info.receiver,
-                msg_type: m_info.msg_type,
-                content: m_info.message,
-                created_date: new Date(m_info.msg_time)
-            });
-            new_msg.save((err) => { // Chat msgs Collection에 저장 
-                if(err){
-                    console.log(err.message);
-                    return;
-                }
-                console.log("DB save success (File)");
-                console.log("File name was " + m_info.message);
-                io.to(socket.room).emit('receive_msg', new_msg); // sender receiver 양쪽 다에게 일단 보냄 (text msg는 sender client쪽에서 전송과 동시에 업데이트 하지만 file msg는 아님. server쪽에서 양쪽 모두 업데이트 해야함)
-            });
+        var msg_sentTime = new Date(m_info.msg_time);
+        var s3Filename = m_info.sender + '__' + Date.parse(m_info.msg_time) + '__' + dataName; //'sender의 user_id'__'시간'__'원본파일 이름 및 확장자' 이런 방식으로 s3 키 생성. 중복 방지를 위해서 이런 방식으로 함
+        var s3_param = { // s3 접근에 필요한 parameter 값들을 담고 있음
+            Bucket: 'firsttest-s3.com',
+            Key: 'images/' + s3Filename,
+            ACL: 'public-read',
+            Body: stream
+        };
+        s3.upload(s3_param, function(err, data){ // s3 버킷에 업로드
+            if(err){
+                console.log("Error...");
+                console.log(err);
+            }
+            else{
+                console.log("Done...");
+                console.log(data);
+                var new_msg = new Chat_msg({ // Instance 생성
+                    room: m_info.room_name,
+                    sender: m_info.sender,
+                    receiver: m_info.receiver,
+                    msg_type: m_info.msg_type,
+                    content: 'https://d1s02z0ai6qb0b.cloudfront.net/' + s3_param.Key, // cloudfront 링크로, 파일 보여주기 및 다운 링크로 사용
+                    created_date: msg_sentTime
+                });
+                new_msg.save((dbErr) => { // Chat msgs Collection에 저장 
+                    if(dbErr){
+                        console.log(dbErr.message);
+                        return;
+                    }
+                    console.log("DB save success (File)");
+                    console.log("File name was " + m_info.message);
+                    io.to(socket.room).emit('receive_msg', new_msg); // sender receiver 양쪽 다에게 일단 보냄 (text msg는 sender client쪽에서 전송과 동시에 업데이트 하지만 file msg는 아님. server쪽에서 양쪽 모두 업데이트 해야함)
+                });
+            }
         });
-        stream.pipe(writeStream); // stream을 위에서 만든 writeStream과 연결
-    });
+    })
     socket.on('disconnect', () => { // 접속 종료
         socket.broadcast.to(socket.room).emit('left_room', socket.nick)
         console.log(socket.nick + " disconnected");

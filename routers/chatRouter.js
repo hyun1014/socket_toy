@@ -4,8 +4,8 @@ const router = express.Router();
 const mongSchema = require('../schemas');
 const moment = require('moment'); // 채팅방 메시지 시간 표시
 
-var User = mongoose.model('user', mongSchema.userSchema);
-var Chat_msg = mongoose.model('chat_msgs', mongSchema.chatSchema, 'Chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
+var User = mongoose.model('chat_user', mongSchema.userSchema, 'chat_users');
+var Chat_msg = mongoose.model('chat_msg', mongSchema.chatSchema, 'chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
 
 router.get('/:user_id', async (req, res) => { // 로그인 이후 채팅 가능한 유저 목록 (현재는 그냥 db에 있는 다른 유저들 전부 추가)
     var self_nick = null;

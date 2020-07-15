@@ -23,8 +23,8 @@
                     <% if(msg_log[i].sender==sender.user_id) { %>
                         <li style="text-align:right;">
                             <% if(msg_log[i].msg_type=='media') { %>
-                                <a href="/down_images/<%= msg_log[i].content %>" target="_blank">
-                                    <img src="/down_images/<%= msg_log[i].content %>" width='100px' height='100px'>
+                                <a href="<%= msg_log[i].content %>" target="_blank">
+                                    <img src="<%= msg_log[i].content %>" width='100px' height='100px'>
                                 </a>
                             <% } else { %> 
                                 <%= msg_log[i].content %>
@@ -34,8 +34,8 @@
                     <% } else { %>
                         <li style="text-align:left;">
                             <% if(msg_log[i].msg_type=='media') { %>
-                                <a href="/down_images/<%= msg_log[i].content %>" target="_blank">
-                                    <img src="/down_images/<%= msg_log[i].content %>" width='100px' height='100px'>
+                                <a href="<%= msg_log[i].content %>" target="_blank">
+                                    <img src="<%= msg_log[i].content %>" width='100px' height='100px'>
                                 </a>
                             <% } else { %> 
                                 <%= msg_log[i].content %>

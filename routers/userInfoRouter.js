@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const mongSchema = require('../schemas');
 
-var User = mongoose.model('user', mongSchema.userSchema);
+var User = mongoose.model('chat_user', mongSchema.userSchema, 'chat_users');
 
 router.get('/sign_up', function(req, res){ // 회원가입 페이지 (montest_list.ejs)
     res.render('sign_up.ejs', {err_msg: undefined});
