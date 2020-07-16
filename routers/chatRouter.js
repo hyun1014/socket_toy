@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const mongSchema = require('../schemas');
 const moment = require('moment'); // 채팅방 메시지 시간 표시
+const timeFunc = require('../timeFunctions');
 
 var User = mongoose.model('chat_user', mongSchema.userSchema, 'chat_users');
 var Chat_msg = mongoose.model('chat_msg', mongSchema.chatSchema, 'chat_msgs'); // Model 이름, 사용 schema, collection 이름(이거 없으면 model lowercase된거에 s 붙여서 알아서 만듬)
@@ -22,7 +23,6 @@ router.get('/:user_id', async (req, res) => { // 로그인 이후 채팅 가능�
 });
 
 router.get('/:user_id/:target', async (req, res) => { // 채팅방 입장
-
     var msg_sender = null
     var msg_receiver = null;
     await realUser.findOne({uid: req.params.user_id})
@@ -40,15 +40,14 @@ router.get('/:user_id/:target', async (req, res) => { // 채팅방 입장
     console.log("Room name is " + room_name);
     console.log("Sender\n-------------------\n" + msg_sender);
     console.log("Receiver\n-------------------\n" + msg_receiver);
-    Chat_msg.find({room: room_name}, // room_name에서 발생한 Chat_msg 전부 조회
-        function(err, msg_log){
-            if(err){
-                return res.status.send({error: 'db failed'});
-            }
-            // sender, receiver는 각각 user collection에서 나온 doc임
-            res.render('chat_room.ejs', {sender: msg_sender, receiver: msg_receiver, msg_log: msg_log, moment: moment});
-            res.end();
-        });
+    Chat_msg.find({room: room_name}).sort({created_date:1}).exec(function(err, msg_log){ // room_name에서 발생한 Chat_msg 전부 조회 및 날짜순 정렬
+        if(err){
+            return res.status.send({error: 'db failed'});
+        }
+        // sender, receiver는 각각 user collection에서 나온 doc임
+        res.render('chat_room.ejs', {sender: msg_sender, receiver: msg_receiver, msg_log: msg_log, timeFunc: timeFunc});
+        res.end();
+    });
 });
 
 module.exports = router;
