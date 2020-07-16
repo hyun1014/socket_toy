@@ -2,25 +2,33 @@
 <html>
     <head>
         <meta charset='utf-8'>
-        <title>Index</title>
+        <title>Chat room</title>
     </head>
     <body>
         <p id="sender_id" hidden><%= sender._id %></p>
         <p id="sender_uid" hidden><%= sender.uid %></p>
         <p id="receiver_id" hidden><%= receiver._id %></p>
         <p id="receiver_uid" hidden><%= receiver.uid %></p>
+        <p id="last_msg_date" hidden><%= msg_log[msg_log.length-1].created_date.getDate() %> </p>
         <p>User: <strong id='sender_nick'><%= sender.nickname %></strong> </p>
         <p>상대방: <strong id='receiver_nick'><%= receiver.nickname %></strong></p>
-        <form id='chat' action='/' method='POST'>
+        <form id='text_chat' action='/' method='POST'>
             메시지 전송: <input type='text' id='send_msg'>
-            <input type='submit' value='Send'><br>
-            파일 전송: <input id='sendfile' type='file' accept="image/png, image/jpg, image/jpeg, image/gif"><br>
+            <input type='submit' value='Send'>
+        </form>
+        <form id='file_chat' action='/' method='POST'>
+            파일 전송: <input id='sendfile' type='file' accept="image/png, image/jpg, image/jpeg, image/gif" multiple>
+            <input type='submit' value='Send'>
         </form>
         <div style="overflow:scroll; width:500px; height:700px; border: 1px solid black;
         padding: 20px 20px 20px 20px;">
             <ul id="chat_log" style="list-style: none; overflow-y: auto;">
-                <li style="text-align:center;">----Chatting with <%= receiver.nickname %>----</li>
-                <% for(var i=0 ; i<msg_log.length; i++) { %>
+                <li style="text-align:center;">----------------Chatting with <%= receiver.nickname %>----------------</li>
+                <% for(var i=0, curday=-1; i<msg_log.length; i++) { %>
+                    <% if(msg_log[i].created_date.getDate()!=curday) { %>
+                        <li style="text-align:center;">-----------<%= timeFunc.msg_date(msg_log[i].created_date) %>-----------</li>
+                        <% curday = msg_log[i].created_date.getDate() %> 
+                    <% } %> 
                     <% if(msg_log[i].sender.equals(sender._id)) { %>
                         <li style="text-align:right;">
                             <% if(msg_log[i].msg_type=='media') { %>
@@ -30,7 +38,7 @@
                             <% } else { %> 
                                 <%= msg_log[i].content %>
                             <% } %>  
-                            <small>(<%= moment(msg_log[i].created_date).format('HH:mm') %>)</small>
+                            <small>(<%= timeFunc.msg_time(msg_log[i].created_date) %>)</small>
                         </li>
                     <% } else { %>
                         <li style="text-align:left;">
@@ -41,7 +49,7 @@
                             <% } else { %> 
                                 <%= msg_log[i].content %>
                             <% } %>  
-                            <small>(<%= moment(msg_log[i].created_date).format('HH:mm') %>)</small>
+                            <small>(<%= timeFunc.msg_time(msg_log[i].created_date) %>)</small>
                         </li>
                     <% } %> 
                 <% } %> 
