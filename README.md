@@ -1,4 +1,4 @@
-# socket_toy (20.07.09)
+# socket_toy (20.07.17)
 
 Server: Node.js
 
@@ -44,7 +44,8 @@ socket_toy
 │   ├── chatRouter.js
 │   └── userInfoRouter.js
 ├── static/js
-│   └── chat_sockett.js
+│   ├── socket.io-stream.js
+│   └── chat_socket.js
 ├── views
 │   ├── chat_room.ejs
 │   ├── index.ejs
@@ -52,14 +53,18 @@ socket_toy
 │   └── user_list.ejs
 ├── app.js
 ├── schemas.js
+├── timeFunctions.js
 ├── package.json
 ├── package-lock.json
+├── Dockerfile
+├── .env (보안상 git에 직접 올리지 않음)
+├── .dockerignore
 └── .gitignore
 ```
 
 ## DB collection Schema
 ```Javascript
-userSchema: new Schema({ // User collection schema
+userSchema: new Schema({ // User collection schema (실제 개발에서는 더 이상 사용하지 않으나 테스트용으로 남겨놓음)
         user_id: {type: String, required: true, unique: true},
         password: {type: String, required: true},
         nickname: {type: String, required: true},
@@ -67,50 +72,59 @@ userSchema: new Schema({ // User collection schema
     },{versionKey: false}),
 chatSchema: new Schema({ // Chatting message collection schema
         room: {type: String},
-        sender: {type: String},
-        receiver: {type: String},
+        sender: {type: mongoose.Schema.Types.ObjectId},
+        receiver: {type: mongoose.Schema.Types.ObjectId},
+        msg_type: {type: String}, // 파일 전송기능 구현으로 인한 필드 추가
         content: {type: String},
-        created_date: {type: Date, default: Date.now}
+        created_date: {type: Date, default: Date.now} 
     },{versionKey: false})
+realUserSchema: new Schema({ // 개발 DB의 user collection에서 필요한것들로만 구성된 schema (어차피 이걸로 user 새로 만들일 없음)
+        uid: {type: String},
+        nickname: {type: String},
+        status_message: {type: String},
+        img: {type: String}
+    }, {versionKey: false})
 ```
 
 ## 현재 진행상황
 
-- 회원가입 기능
-  - 사용자가 입력한 정보를 기반으로 users collection에 document를 생성하고 저장합니다.
-  - user_id, password, nickname 필드 전부 required이며, user_id는 unique 설정으로 중복값이 없도록 하였습니다.
-- 로그인 기능
-  - 사용자가 입력한 정보와 일치하는 users document가 있는지 확인후, 일치한다면 그 정보를 기반으로 어플리케이션이 동작합니다.
 - 1대1 채팅 기능
   - 다른 유저와 채팅이 가능합니다. 채팅 메시지는 자신이 보낸 메시지와 받은 메시지로 구별이 가능합니다.
-  - 메시지가 발생한 시간, 분 단위가 표시됩니다.
+  - 메시지마다 발생한 시간, 분 단위가 표시되며, 날짜가 넘어가는 경우 로그 메시지로 알려줍니다.
   - 상대가 채팅방에 들어오거나 나갈 경우 메시지를 통해 알 수 있습니다.
+  - url 필드에 자신과 상대의 uid를 넣는 형태로 둘 사이의 채팅방 페이지가 만들어집니다.(예시: chat_room/uid0/uid1)
+- 파일 전송 기능
+  - 현재는 이미지 파일만 전송 가능하도록 구현하였습니다.
+  - 채팅방에는 축소된 크기의 썸네일로 표시됩니다.
+  - 한번에 여러개의 파일을 송수신 가능하며, 사진 썸네일을 클릭할 경우 원본 파일을 다운로드 가능합니다.
+  - S3 버킷에 저장 및 DB에 링크 기록 후, 썸네일이 채팅방에 표시됩니다.
+
 - DB 연결
-  - 현재는 localhost에 있는 db를 활용한다고 가정하여 코드를 짰으며, users, Chat_msgs 2개의 collection이 존재합니다.
+  - 개발 DB와 연결하여 chat_msgs collection을 새로 만들고, 채팅 로그를 저장합니다.
+  - S3 fanrep-test 버킷에 연결하여 테스트용 폴더를 새로 만들었고, 이미지 파일들을 저장합니다. 
+
+- Docker
+  - Dockerfile을 작성해놓은 상태로, 빌드를 통해 이미지 및 컨테이너 생성이 가능합니다.
+
+- 기존 로그인 기능 및 chat_user collection
+  - 개발 DB 연결 및 실제 user collection을 사용하면서 더 이상 사용하지 않지만, 혹시 테스트용으로 사용할 수도 있으니 코드는 남겨놓았습니다.
   
 ## 현재 문제점
 
-- 회원가입 기능
-  - 현재 로그인 기능은 매우 단순하게 구현한 상태이며, url값을 임의로 조작하면 아이디 및 비밀번호 입력 없이도 로그인을 한것처럼 사용이 가능합니다.
-  - 세션 또는 쿠키 활용을 통해 제대로 된 로그인 구현이 필요합니다.
-- 1대1 채팅 기능
-  - 현재는 text 메시지만 송수신 가능한 상태로, 미디어 파일(사진, 동영상 등)은 지원되지 않습니다.
-  - 메시지 발생 시간은 뜨지만, 날짜 표시는 아직 미지원
-  - local에서 돌릴때는 정상적으로 동작하지만, ec2에 올려서 돌릴 경우엔 socket disconect event가 늦게 전달되는 경우가 많습니다. 심하면 유저가 나가고 30초 뒤에야 나갔다는 메시지가 뜹니다.
+- 파일 전송기능
+  - 현재는 이미지 파일(jpg, jpeg, png, gif)들만 송수신 가능하며, 다른 확장자의 파일들은 막아놓았습니다.
 
 ## 향후 계획
 
-- 로그인 기능 개선
-  - 세션 또는 쿠키 활용을 통해 안정성 강화
-- 1대1 채팅 기능
-  - 미디어 파일 송수신 기능 구현
-  - 메시지 송수신 날짜 표시
-- 기타
-  - 웹 뷰를 앱에 넣는 방식 (Vue.js || React) || 앱에 그대로 넣는 방식 (React native) 둘 중 하나 결정
+- 프론트엔드 구축
+  - Vue.js를 활용하여 페이지 구현
+- 배포 과정 및 인프라 계획 설계
+- 추가적으로 필요한 기능 있는지 확인 및 코드 최적화
+  - 불필요한 부분 삭제
+  - 가독성 향상
   
 ## 필요한 것들
 
-- 숙련도 향상 필요
-  - npm passport 패키지(세션 활용 로그인 구현 패키지)
-  - socket.io-stream || socket.io-file 사용(파일 송수신)
-- 프론트엔드 프레임워크 결정
+- 프론트엔드 구축 (Vue.js 공부 필요)
+- Docker 및 Jenkins에 대한 숙련도 향상
+- Elastic Beanstalk 등 현재 사용중인 aws 기반 인프라 구조에 대한 심화적인 파악
