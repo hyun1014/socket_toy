@@ -82,7 +82,7 @@ $('#file_chat').submit(() => { // ---------------media 파일 전송
             receiver: receiver_id,
             msg_type: 'media',
             message: tar_file.name,
-            msg_time: msg_time.toUTCString()
+            msg_time: msg_time.toString()
         };
         console.log('media: ' + msg_info.msg_time + ' / ' + typeof msg_info.msg_time);
         ss(socket).emit('sendFile', stream, tar_file.name, tar_file.size, msg_info);
